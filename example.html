@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>PolyShadow.js WebGL Example</title>
+        <script type="text/javascript" src="polyshadow.js"></script>
+        <script>
+            var gl;
+            var rectangleShader;
+            var triangleShader;
+            var triangleMesh;
+            var rectangle = [ -0.7, -0.4, 0.7, 0.4 ];
+            var transformation = [
+                0.5, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0
+            ];
+            var bgColor = [ 0.0, 0.0, 0.0, 0.0 ];
+            var fillColor = [ 0.0, 0.0, 0.0, 1.0 ];
+            var sigma = 0.05;
+            
+            function generateStar() {
+                var starCoords = [ ];
+                const oR = 0.875;
+                const iR = 0.5*(3-Math.sqrt(5))*oR;
+                for (let i = 0; i < 5; ++i) {
+                    var al = 0.2*Math.PI*(2*i-1);
+                    var am = 0.2*Math.PI*(2*i);
+                    var ar = 0.2*Math.PI*(2*i+1);
+                    starCoords.push(0.0, 0.0);
+                    starCoords.push(iR*Math.sin(ar), iR*Math.cos(ar));
+                    starCoords.push(iR*Math.sin(al), iR*Math.cos(al));
+                    starCoords.push(iR*Math.sin(al), iR*Math.cos(al));
+                    starCoords.push(iR*Math.sin(ar), iR*Math.cos(ar));
+                    starCoords.push(oR*Math.sin(am), oR*Math.cos(am));
+                }
+                return starCoords;
+            }
+
+            function main() {
+                const canvas = document.getElementById("mainCanvas");
+                gl = canvas.getContext("webgl");
+                gl.disable(gl.DEPTH_TEST);
+                gl.enable(gl.BLEND);
+                gl.blendFunc(gl.ONE, gl.ONE);
+                gl.clearColor(0.0, 0.0, 0.0, 0.0);
+                rectangleShader = PolyShadow.createRectangleShader(gl);
+                triangleShader = PolyShadow.createTriangleShader(gl);
+                triangleMesh = PolyShadow.createTriangleMesh(gl, generateStar());
+                requestAnimationFrame(redraw);
+            }
+
+            function redraw() {
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                transformation[12] = -0.5;
+                PolyShadow.drawRectangle(gl, rectangleShader, rectangle, transformation, sigma, fillColor, bgColor);
+                transformation[12] = 0.5;
+                PolyShadow.drawTriangleMesh(gl, triangleShader, triangleMesh, transformation, sigma, fillColor, bgColor);
+            }
+
+            function changeSigma(s) {
+                sigma = s;
+                requestAnimationFrame(redraw);
+            }
+
+            window.onload = main;
+        </script>
+        <style>
+            body { font-family: sans-serif; }
+        </style>
+    </head>
+    <body>
+        <h1>PolyShadow</h1>
+        <canvas id="mainCanvas" width="960" height="480"></canvas>
+        <div>Sigma:</div>
+        <div><input type="range" min="2" max="100" value="50" autocomplete="off" oninput="changeSigma(0.001*this.value);"></div>
+    </body>
+</html>
